@@ -1,35 +1,37 @@
 const notices = [
     {
-        Id : 1,
-        Author : 1,
-        Title : "ooh crikey",
-        Contents : "Watch out Grandma, here comes a lawnmower.",
-        TimeStamp: new Date().getTime()
+        id : 1,
+        author : 1,
+        title : "ooh crikey",
+        contents : "Watch out Grandma, here comes a lawnmower.",
+        timeStamp: new Date().getTime()
     },
     {
-        Id : 2,
-        Author : 1,
-        Title : "ra ra ra",
-        Contents : "Mower Liberation Front.",
-        TimeStamp: new Date().getTime()
+        id : 2,
+        author : 1,
+        title : "ra ra ra",
+        contents : "Mower Liberation Front.",
+        timeStamp: new Date().getTime()
     },
     {
-        Id : 3,
-        Author : 2,
-        Title : "Up the Irons",
-        Contents : "Scream for me, Merthyr Tydfil.",
-        TimeStamp: new Date().getTime()
+        id : 3,
+        author : 2,
+        title : "Up the Irons",
+        contents : "Scream for me, Merthyr Tydfil.",
+        timeStamp: new Date().getTime()
     }
 ]
 
+// capitalised members!
+// postman suggests the api versions are lowercase
 const users = [
     {
-        Id : 1,
-        Name : "Fred Bloggs"
+        id : 1,
+        name : "Fred Bloggs"
     },
     {
-        Id : 2,
-        Name : "Dobbin"
+        id : 2,
+        name : "Dobbin"
     }
 ]
 
