@@ -1,129 +1,147 @@
 <template>  
-  <div class="center-horizontally">
-    <img src="./assets/OnBoarding.png" alt="Notice Board" >
+  <div class="full-width">
+    <img src="./assets/OnBoarding.png" alt="Notice Board">
     <h1>OnBoarding App</h1>
   </div>
-  <div>
+
+  <div class="column">
     <h2>Notices</h2>
     <ul>
       <li v-for="notice in notices" :key="notice.id">
-        {{ notice.title }} by {{ getUserName(notice.authorId) }}
-        <button @click="deleteNoticeById(notice.id)"> Delete </button>
+        {{ notice.title }} by {{ findUserName(notice.authorId) }}
+        <button @click="deleteNoticeById(notice.id)">Delete</button>
       </li>
     </ul>
-    <input v-model="newNoticeContent" placeholder="New Notice Content" />
-    <button @click="addNotice(newNoticeContent)" :disabled="true"> Add notice </button>
+    <div class="form-group">
+      <label for="user">User</label>
+      <select v-model="selectedUser" id="user" name="user">
+        <option v-for="user in users" :key="user.id" :value="user.id">{{ user.name }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input v-model="newNoticeTitle" type="text" id="title" name="title">
+    </div>
+    <div class="form-group">
+      <label for="newNoticeContent">Content</label>
+      <input v-model="newNoticeContent" placeholder="New Notice Content">
+      <button @click="addNotice">Add notice</button>
+    </div>
   </div>
 
-  <div>
+  <div class="column">
     <h2>Users</h2>
     <ul>
       <li v-for="user in users" :key="user.id">
         {{ user.name }}
-        <button @click="deleteUserById(user.id)"> Delete </button>
+        <button @click="deleteUserById(user.id)">Delete</button>
       </li>
     </ul>
-    <input v-model="newUserName" placeholder="New User Name" />
-    <button @click="addUser(newUserName)" :disabled="true"> Add User </button>
+    <input v-model="newUserName" placeholder="New User Name">
+    <button @click="postUser">Add User</button>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-/*
-import dummyData from './data/dummydata.js';
-const notices = ref(dummyData.notices);
-const users = ref(dummyData.users);
-*/
+
 const notices = ref([]);
 const users = ref([]);
+const newNoticeTitle = ref('');
 const newNoticeContent = ref('');
 const newUserName = ref('');
+const selectedUser = ref('');
+const error = ref(null);
+const isLoading = ref(false);
 
-const getUserName = (authorId) => {
+const findUserName = (authorId) => {
   const user = users.value.find(user => user.id === authorId);
   return user ? user.name : 'Unknown';
 };
 
-const addNotice = (textContent) => {
-  let newNotice = {
-    id: notices.value.length + 1,
-    authorId: 2,
-    title: "New Notice Title",
-    content: textContent,
-    timeStamp: new Date().getTime()
-  };
-  notices.value.push(newNotice);
-};
-
-const addUser = (userName) => {
-  let newUser = {
-    id: users.value.length + 1,
-    name: userName
-  };
-  users.value.push(newUser);
-};
-
-/*
-const deleteNoticeById = (id) => {
-  const index = notices.value.findIndex(notice => notice.id === id);
-  if (index !== -1) {
-    notices.value.splice(index, 1);
-  }
-};
-
-const deleteUserById = (id) => {
-  const index = users.value.findIndex(user => user.id === id);
-  if (index !== -1) {
-    users.value.splice(index, 1);
-  }
-};
-*/
-
-const error = ref(null);
-
 const getNotices = async () => {
+  isLoading.value = true;
   try {
     const response = await axios.get('https://localhost:7109/api/posts/');
     notices.value = response.data;
   } catch (err) {
     console.error('Error fetching notices:', err);
     error.value = err;
+  } finally {
+    isLoading.value = false;
   }
 };
+
 const getUsers = async () => {
+  isLoading.value = true;
   try {
     const response = await axios.get('https://localhost:7109/api/users/');
     users.value = response.data;
   } catch (err) {
     console.error('Error fetching users:', err);
     error.value = err;
+  } finally {
+    isLoading.value = false;
   }
 };
-/*
+
 const postUser = async () => {
-  try {
-    const newPost = { id: 7, name: 'Elvis' };
-    const response = await axios.post('https://localhost:7109/api/users/', newPost);
-    console.log(response.data);
-  } catch (err) {
-    console.error('Error posting data:', err);
-    error.value = err;
+  if (!newUserName.value.trim()) {
+    error.value = 'User name cannot be empty.';
+    return;
   }
-};*/
+  isLoading.value = true;
+  try {
+    const createUserDto = { name: newUserName.value };
+    const response = await axios.post('https://localhost:7109/api/users/', createUserDto);
+    users.value.push(response.data); // Update users list
+    newUserName.value = ''; // Clear input
+  } catch (err) {
+    console.error('Error posting user:', err);
+    error.value = err;
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const deleteUserById = async (id) => {
+  isLoading.value = true;
   try {
-    const response = await axios.delete('https://localhost:7109/api/users/' + id);
-    console.log(response.data);
+    await axios.delete('https://localhost:7109/api/users/' + id);
+    users.value = users.value.filter(user => user.id !== id); // Update users list
   } catch (err) {
-    console.error('Error deleting data:', err);
+    console.error('Error deleting user:', err);
     error.value = err;
+  } finally {
+    isLoading.value = false;
   }
 };
 
-// lifecycle hook can't be async, despite calling async fetch()
+const addNotice = async () => {
+  if (!newNoticeTitle.value.trim() || !newNoticeContent.value.trim() || !selectedUser.value) {
+    error.value = 'All fields are required.';
+    return;
+  }
+  isLoading.value = true;
+  try {
+    const newNotice = {
+      title: newNoticeTitle.value,
+      content: newNoticeContent.value,
+      authorId: selectedUser.value
+    };
+    const response = await axios.post('https://localhost:7109/api/posts/', newNotice);
+    notices.value.push(response.data); // Update notices list
+    newNoticeTitle.value = ''; // Clear input
+    newNoticeContent.value = ''; // Clear input
+  } catch (err) {
+    console.error('Error adding notice:', err);
+    error.value = err;
+  } finally {
+    isLoading.value = false;
+  }
+};
+
 onMounted(() => {
   getUsers();
   getNotices();
@@ -131,9 +149,31 @@ onMounted(() => {
 </script>
 
 <style scoped>
-  .center-horizontally {
-    margin: 0 auto;
-    width: 50%; /* Adjust as needed */
+  .full-width {
+    width: 100%;
+    background-color: #f1f1f1;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+  }
+  .full-width img {
+    margin-right: 10px;
+  }
+  .column {
+    float: left;
+    width: 50%;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  input, select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
   }
   h1 {
     font-size: 2em;
